@@ -1,103 +1,109 @@
-import { useCurrentAccount, useSuiClientQuery, useSuiClient } from '@mysten/dapp-kit';
+import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
-// import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-// import { fromB64 } from '@mysten/sui.js/utils';
 
 // Configuration
-const PACKAGE_ID = 'YOUR_PACKAGE_ID'; // Replace with your package ID
+const PACKAGE_ID = import.meta.env.VITE_PACKAGE_ID; // Replace with your package ID
+
+if (!PACKAGE_ID) throw Error("Package ID not found");
+
 const COUNTER_MODULE = 'counter';
 const COUNTER_TYPE = `${PACKAGE_ID}::${COUNTER_MODULE}::Counter`;
 
-// // Initialize client
-const client = useSuiClient();
+export function useCounter() {
+    const account = useCurrentAccount();
+    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
 
-// // Load keypair
-// const privateKey = 'YOUR_PRIVATE_KEY'; // Replace with your private key
-// const keypair = Ed25519Keypair.fromSecretKey(fromB64(privateKey).slice(1));
-
-async function createCounter() {
-    const txb = new Transaction();
-    txb.moveCall({
-        target: `${PACKAGE_ID}::${COUNTER_MODULE}::create`,
-    });
-    
-    const result = await client.signAndExecuteTransaction({
-        transaction: txb,
-        signer: keypair,
-    });
-    
-    console.log('Counter created:', result);
-    return result;
-}
-
-async function incrementCounter(counterId: string) {
-    const txb = new TransactionBlock();
-    txb.moveCall({
-        target: `${PACKAGE_ID}::${COUNTER_MODULE}::increment`,
-        arguments: [txb.object(counterId)],
-    });
-    
-    const result = await client.signAndExecuteTransactionBlock({
-        transactionBlock: txb,
-        signer: keypair,
-    });
-    
-    console.log('Counter incremented:', result);
-    return result;
-}
-
-async function decrementCounter(counterId: string) {
-    const txb = new TransactionBlock();
-    txb.moveCall({
-        target: `${PACKAGE_ID}::${COUNTER_MODULE}::decrement`,
-        arguments: [txb.object(counterId)],
-    });
-    
-    const result = await client.signAndExecuteTransactionBlock({
-        transactionBlock: txb,
-        signer: keypair,
-    });
-    
-    console.log('Counter decremented:', result);
-    return result;
-}
-
-async function resetCounter(counterId: string) {
-    const txb = new TransactionBlock();
-    txb.moveCall({
-        target: `${PACKAGE_ID}::${COUNTER_MODULE}::reset`,
-        arguments: [txb.object(counterId)],
-    });
-    
-    const result = await client.signAndExecuteTransactionBlock({
-        transactionBlock: txb,
-        signer: keypair,
-    });
-    
-    console.log('Counter reset:', result);
-    return result;
-}
-
-async function main() {
-    try {
-        // Create a new counter
-        const creationResult = await createCounter();
-        const counterId = creationResult.objectChanges?.find(
-            (change) => change.type === 'created' && change.objectType === COUNTER_TYPE
-        )?.objectId;
-        
-        if (!counterId) {
-            throw new Error('Counter ID not found in creation result');
+    async function createCounter() {
+        try {
+            if (!account) throw new Error('No account connected');
+            
+            const txb = new Transaction();
+            txb.moveCall({
+                target: `${PACKAGE_ID}::${COUNTER_MODULE}::create`,
+            });
+            
+            console.log('Creating counter...');
+            const result = await signAndExecute({
+                transaction: txb,
+            });
+            console.log('Counter created successfully:', result);
+            return result;
+        } catch (error) {
+            console.error('Error creating counter:', error);
+            throw error;
         }
-
-        // Interact with the counter
-        await incrementCounter(counterId);
-        await incrementCounter(counterId);
-        await decrementCounter(counterId);
-        await resetCounter(counterId);
-    } catch (error) {
-        console.error('Error:', error);
     }
-}
 
-main();
+    async function incrementCounter(counterId: string) {
+        try {
+            if (!account) throw new Error('No account connected');
+            
+            const txb = new Transaction();
+            txb.moveCall({
+                target: `${PACKAGE_ID}::${COUNTER_MODULE}::increment`,
+                arguments: [txb.object(counterId)],
+            });
+            
+            console.log(`Incrementing counter ${counterId}...`);
+            const result = await signAndExecute({
+                transaction: txb,
+            });
+            console.log('Counter incremented successfully:', result);
+            return result;
+        } catch (error) {
+            console.error('Error incrementing counter:', error);
+            throw error;
+        }
+    }
+
+    async function decrementCounter(counterId: string) {
+        try {
+            if (!account) throw new Error('No account connected');
+            
+            const txb = new Transaction();
+            txb.moveCall({
+                target: `${PACKAGE_ID}::${COUNTER_MODULE}::decrement`,
+                arguments: [txb.object(counterId)],
+            });
+            
+            console.log(`Decrementing counter ${counterId}...`);
+            const result = await signAndExecute({
+                transaction: txb,
+            });
+            console.log('Counter decremented successfully:', result);
+            return result;
+        } catch (error) {
+            console.error('Error decrementing counter:', error);
+            throw error;
+        }
+    }
+
+    async function resetCounter(counterId: string) {
+        try {
+            if (!account) throw new Error('No account connected');
+            
+            const txb = new Transaction();
+            txb.moveCall({
+                target: `${PACKAGE_ID}::${COUNTER_MODULE}::reset`,
+                arguments: [txb.object(counterId)],
+            });
+            
+            console.log(`Resetting counter ${counterId}...`);
+            const result = await signAndExecute({
+                transaction: txb,
+            });
+            console.log('Counter reset successfully:', result);
+            return result;
+        } catch (error) {
+            console.error('Error resetting counter:', error);
+            throw error;
+        }
+    }
+
+    return {
+        createCounter,
+        incrementCounter,
+        decrementCounter,
+        resetCounter,
+    };
+}

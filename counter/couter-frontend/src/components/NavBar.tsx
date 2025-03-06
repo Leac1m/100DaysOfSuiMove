@@ -8,7 +8,7 @@ function NavBar() {
     <nav className="navbar">
           <div className="logo">MyApp</div>
           
-          { account ? <div>Connect</div> : <ConnectButton className='connect-button' connectText="Connect wallet" />}
+          { account ? <div>Connected</div> : <ConnectButton className='connect-button' connectText="Connect wallet" />}
           {/* <button className="connect-button">Connect</button> */}
     </nav>
   )
