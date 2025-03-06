@@ -1,8 +1,9 @@
 
 #[test_only]
 module counter::counter_tests {
-    use counter::counter::{Self, Counter};
+    use counter::counter::{Self, Counter, CounterCreated};
     use sui::test_scenario::{Self as test, next_tx, ctx};
+    use sui::event;
 
     const OWNER: address = @0xAD;
     const USER: address = @0xAB;
@@ -33,7 +34,16 @@ module counter::counter_tests {
             let mut counter = test::take_from_sender<Counter>(&scenario);
             counter.increment();
 
+            // let events = event::events_by_type<CounterCreated>();
+            // assert!(vector::length(&events) == 1, 0);
+
+            // let create_event = vector::pop_back(&mut events);
+            // assert!(create_event == CounterCreated {
+            //     id: counter_id.to_inner(),
+            //     owner: sender
+            // }, 1);
             assert!(counter.check_value() == 1);
+            
             test::return_to_sender(&scenario, counter);
         };
         test::end(scenario);

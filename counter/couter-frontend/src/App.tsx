@@ -1,6 +1,6 @@
 import './App.css'
 import { CenteredBox } from './components/CenteredBox'
-import { useCurrentAccount, useSuiClientQuery } from '@mysten/dapp-kit';
+import { useCurrentAccount, useSuiClientQuery, useSuiClient } from '@mysten/dapp-kit';
 
 
 function App() {
