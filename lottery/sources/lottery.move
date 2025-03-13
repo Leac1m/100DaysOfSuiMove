@@ -7,8 +7,10 @@ use sui::{
     clock::Clock,
     coin::{Self, Coin},
     random::{Random, new_generator},
-    sui::SUI
+    sui::SUI,
 };
+
+use std::string::String;
 
 // === Errors ===
 const EGameInProgress: u64 = 0;
@@ -21,6 +23,7 @@ const ENoParticipants: u64 = 5;
 // === structs ===
 public struct Game has key {
     id: UID,
+    name: String,
     cost_in_sui: u64,
     participants: u32,
     end_time: u64,
@@ -32,15 +35,17 @@ public struct Game has key {
 public struct Ticket has key {
     id: UID,
     game_id: ID,
+    game_name: String,
     participant_index: u32,
     end_time: u64,
     reward: Option<u64>,
 }
 
 // === Public Functions ===
-public fun create(end_time: u64, cost_in_sui: u64, ctx: &mut TxContext) {
+public fun create(name: String, end_time: u64, cost_in_sui: u64, ctx: &mut TxContext) {
     let game = Game {
         id: object::new(ctx),
+        name,
         cost_in_sui,
         participants: 0,
         end_time,
@@ -66,6 +71,7 @@ public fun buy_ticket(
     Ticket {
         id: object::new(ctx),
         game_id: object::id(game),
+        game_name: game.name,
         participant_index: game.participants,
         end_time: game.end_time,
         reward: option::none()
@@ -95,7 +101,7 @@ public fun redeem(ticket: &mut Ticket, game: &mut Game, ctx: &mut TxContext): Co
 public use fun destroy_ticket as Ticket.destroy;
 
 public fun destroy_ticket(ticket: Ticket) {
-    let Ticket { id, game_id: _, participant_index: _, end_time: _, reward: _ } = ticket;
+    let Ticket { id, game_id: _, participant_index: _, game_name: _, end_time: _, reward: _ } = ticket;
     object::delete(id);
 }
 

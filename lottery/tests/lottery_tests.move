@@ -35,7 +35,8 @@ fun test_lottery() {
     // Create the game and get back the output objects.
     mint(user1, 1000, &mut ts);
     let end_time = 100;
-    lottery::create(end_time, 10, ts.ctx());
+    let name = b"test_name".to_string();
+    lottery::create(name, end_time, 10, ts.ctx());
     ts.next_tx(user1);
     let mut game: Game = ts.take_shared();
     assert!(game.cost_in_sui() == 10, 1);
