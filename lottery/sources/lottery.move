@@ -8,6 +8,7 @@ use sui::{
     coin::{Self, Coin},
     random::{Random, new_generator},
     sui::SUI,
+    event,
 };
 
 use std::string::String;
@@ -41,6 +42,42 @@ public struct Ticket has key {
     reward: Option<u64>,
 }
 
+// === Events Structs ===
+// Game Created
+public struct GameCreated has copy, drop {
+    game_id: ID,
+    name: String,
+    cost_in_sui: u64,
+    end_time: u64,
+}
+
+// Ticket Purchase
+public struct TicketPurchase has copy, drop {
+    game_id: ID,
+    game_name: String,
+    participant_index: u32,
+    end_time: u64
+}
+
+// Winner Determined
+public struct WinnerDetermined has copy, drop {
+    game_id: ID,
+    participant_index: u32
+}
+
+// RewardChaimed
+public struct RewardChaimed has copy, drop {
+    game_id: ID,
+    participant_index: u32,
+    reward: u64
+}
+
+// Ticket Destroyed
+public struct TicketDestroyed has copy, drop {
+    game_id: ID,
+    participant_index: u32
+}
+
 // === Public Functions ===
 public fun create(name: String, end_time: u64, cost_in_sui: u64, ctx: &mut TxContext) {
     let game = Game {
@@ -52,6 +89,15 @@ public fun create(name: String, end_time: u64, cost_in_sui: u64, ctx: &mut TxCon
         winner: option::none(),
         balance: balance::zero(),
     };
+
+    event::emit(
+        GameCreated {
+            game_id: object::id(&game),
+            name,
+            cost_in_sui,
+            end_time,
+        }
+    );
     transfer::share_object(game);
 }
 
@@ -68,14 +114,25 @@ public fun buy_ticket(
     game.participants = game.participants + 1;
     coin::put(&mut game.balance, coin);
 
-    Ticket {
+    let ticket = Ticket {
         id: object::new(ctx),
         game_id: object::id(game),
         game_name: game.name,
         participant_index: game.participants,
         end_time: game.end_time,
         reward: option::none()
-    }
+    };
+
+    event::emit(
+        TicketPurchase {
+            game_id: object::id(game),
+            game_name: game.name,
+            participant_index: ticket.participant_index,
+            end_time: game.end_time
+        }
+    );
+
+    ticket
 }
 
 
@@ -86,6 +143,13 @@ entry fun determine_winner(game: &mut Game, r: &Random, clock: &Clock, ctx: &mut
     let mut generator = r.new_generator(ctx);
     let winner = generator.generate_u32_in_range(1, game.participants);
     game.winner = option::some(winner);
+
+    event::emit(
+        WinnerDetermined {
+            game_id: object::id(game),
+            participant_index: winner
+        }
+    );
 }
 
 public fun redeem(ticket: &mut Ticket, game: &mut Game, ctx: &mut TxContext): Coin<SUI> {
@@ -95,13 +159,29 @@ public fun redeem(ticket: &mut Ticket, game: &mut Game, ctx: &mut TxContext): Co
     let reward = coin::from_balance(game.balance.withdraw_all(), ctx);
     option::fill(&mut ticket.reward, reward.value());
 
+    event::emit(
+        RewardChaimed {
+            game_id: object::id(game),
+            participant_index: ticket.participant_index,
+            reward: reward.value()
+        }
+    );
+
     reward
 }
 
 public use fun destroy_ticket as Ticket.destroy;
 
 public fun destroy_ticket(ticket: Ticket) {
-    let Ticket { id, game_id: _, participant_index: _, game_name: _, end_time: _, reward: _ } = ticket;
+    let Ticket { id, game_id, participant_index, game_name: _, end_time: _, reward: _ } = ticket;
+
+    event::emit(
+        TicketDestroyed {
+            game_id,
+            participant_index,
+        }
+    );
+
     object::delete(id);
 }
 
