@@ -74,10 +74,23 @@ export const handleLotteryEvents = async (events: SuiEvent[], type: string) => {
           console.log('Created WinnerDetermined events');
           break;
         case 'RewardChaimed':
-          // TODO: handle RewardChaimed
-          await prisma.rewardChaimed.createMany({
-            data: events as Prisma.RewardChaimedCreateManyInput[],
-          });
+          for (const event of events) {
+            const game = await prisma.game.findUnique({
+              where: { game_id: event.game_id },
+            });
+
+            if (!game) {
+              console.error(`Game with game_id ${event.game_id} not found.`);
+              continue;
+            }
+
+            await prisma.game.update({
+              where: {game_id: event.game_id },
+              data: {reward_claimed: true },
+            });
+
+            console.log(`${event.reward} was claimed in ${event.game_id} by lucker number ${event.participant_index}`);
+          }
           console.log('Created RewardChaimed events');
           break;
         case 'TicketDestroyed':
