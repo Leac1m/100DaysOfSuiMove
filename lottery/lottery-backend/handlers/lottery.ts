@@ -52,10 +52,25 @@ export const handleLotteryEvents = async (events: SuiEvent[], type: string) => {
           console.log('Processed TicketPurchase events');
           break;
         case 'WinnerDetermined':
-          // TODO: handle WinnerDetermined
-          await prisma.winnerDetermined.createMany({
-            data: events as Prisma.WinnerDeterminedCreateManyInput[],
-          });
+          for (const event of events) {
+            // Fetch game by `game_id` from the database
+            const game = await prisma.game.findUnique({
+              where: { game_id: event.game_id },
+            });
+
+            if (!game) {
+              console.error(`Game with game_id ${event.game_id} not found.`);
+              continue;
+            }
+
+            // set `winner` to event.participant_index
+            await prisma.game.update({
+              where: { game_id: event.game_id },
+              data: { winner: event.participant_index.toString() },
+            });
+
+            console.log(`Updated game ${event.game_id} with winner ${event.participant_index}`);
+          }            
           console.log('Created WinnerDetermined events');
           break;
         case 'RewardChaimed':
