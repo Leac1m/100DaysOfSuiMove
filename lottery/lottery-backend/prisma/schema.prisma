@@ -9,10 +9,20 @@ generator client {
 }
 
 
+model Game {
+  dbId String @id @unique @default(uuid())
+  game_id String @unique
+  name String
+  cost_in_sui String
+  pool String
+  end_time String
+  winner String
+  reward_claimed Boolean
+}
 
 model GameCreated {
   dbId String @id @unique @default(uuid())
-  game_id String
+  game_id String @unique
   name String
   cost_in_sui String
   end_time String

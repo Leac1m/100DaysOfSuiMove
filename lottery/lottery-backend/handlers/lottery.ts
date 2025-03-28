@@ -1,4 +1,3 @@
-
 import { SuiEvent } from '@mysten/sui/client';
 import { prisma, Prisma } from '../db';
 
@@ -18,17 +17,39 @@ export const handleLotteryEvents = async (events: SuiEvent[], type: string) => {
       switch (eventName) {
         case 'GameCreated':
           // TODO: handle GameCreated
-          await prisma.gameCreated.createMany({
-            data: events as Prisma.GameCreatedCreateManyInput[],
+          await prisma.game.createMany({
+            data: events.map(d => ({
+              ...d,
+              pool: '0',
+              winner: '0',
+              reward_claimed: false,
+            })) as Prisma.GameCreateManyInput[], // Explicitly cast to the correct type
           });
-          console.log('Created GameCreated events');
+          console.log('Created New Game fromw GameCreated');
           break;
         case 'TicketPurchase':
-          // TODO: handle TicketPurchase
-          await prisma.ticketPurchase.createMany({
-            data: events as Prisma.TicketPurchaseCreateManyInput[],
-          });
-          console.log('Created TicketPurchase events');
+          for (const event of events) {
+            // Fetch the game by game_id from the database
+            const game = await prisma.game.findUnique({
+              where: { game_id: event.game_id },
+            });
+
+            if (!game) {
+              console.error(`Game with ID ${event.game_id} not found`);
+              continue;
+            }
+
+            // Increment the `pool` by `cost_in_sui`
+            const updatedPool = (parseFloat(game.pool) + parseFloat(event.cost_in_sui)).toString();
+
+            // Update the game in the database
+            await prisma.game.update({
+              where: { game_id: event.game_id },
+              data: { pool: updatedPool },
+            });
+          }
+
+          console.log('Processed TicketPurchase events');
           break;
         case 'WinnerDetermined':
           // TODO: handle WinnerDetermined
