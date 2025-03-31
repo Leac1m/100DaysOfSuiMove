@@ -20,39 +20,14 @@ model Game {
   reward_claimed Boolean
 }
 
-model GameCreated {
-  dbId String @id @unique @default(uuid())
-  game_id String @unique
-  name String
-  cost_in_sui String
-  end_time String
-}
 
-model RewardChaimed {
-  dbId String @id @unique @default(uuid())
-  game_id String
-  participant_index Int
-  reward String
-}
-
-model TicketDestroyed {
-  dbId String @id @unique @default(uuid())
-  game_id String
-  participant_index Int
-}
-
-model TicketPurchase {
+model Ticket {
   dbId String @id @unique @default(uuid())
   game_id String
   game_name String
   participant_index Int
   end_time String
-}
-
-model WinnerDetermined {
-  dbId String @id @unique @default(uuid())
-  game_id String
-  participant_index Int
+  destroyed Boolean
 }
 
 

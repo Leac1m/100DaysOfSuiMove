@@ -8,9 +8,9 @@ app.use(cors());
 app.use(express.json());
 
 // Event query endpoints
-app.get('/events/lottery/game-created', async (req, res) => {
+app.get('/events/lottery/games', async (req, res) => {
       try {
-        const events = await prisma.gameCreated.findMany();
+        const events = await prisma.game.findMany();
         res.json(events);
       } catch (error) {
         console.error('Failed to fetch lottery-GameCreated:', error);
@@ -18,42 +18,12 @@ app.get('/events/lottery/game-created', async (req, res) => {
       }
     });
 
-app.get('/events/lottery/ticket-purchase', async (req, res) => {
+app.get('/events/lottery/tickets', async (req, res) => {
       try {
-        const events = await prisma.ticketPurchase.findMany();
+        const events = await prisma.ticket.findMany();
         res.json(events);
       } catch (error) {
         console.error('Failed to fetch lottery-TicketPurchase:', error);
-        res.status(500).json({ error: 'Failed to fetch events' });
-      }
-    });
-
-app.get('/events/lottery/winner-determined', async (req, res) => {
-      try {
-        const events = await prisma.winnerDetermined.findMany();
-        res.json(events);
-      } catch (error) {
-        console.error('Failed to fetch lottery-WinnerDetermined:', error);
-        res.status(500).json({ error: 'Failed to fetch events' });
-      }
-    });
-
-app.get('/events/lottery/reward-chaimed', async (req, res) => {
-      try {
-        const events = await prisma.rewardChaimed.findMany();
-        res.json(events);
-      } catch (error) {
-        console.error('Failed to fetch lottery-RewardChaimed:', error);
-        res.status(500).json({ error: 'Failed to fetch events' });
-      }
-    });
-
-app.get('/events/lottery/ticket-destroyed', async (req, res) => {
-      try {
-        const events = await prisma.ticketDestroyed.findMany();
-        res.json(events);
-      } catch (error) {
-        console.error('Failed to fetch lottery-TicketDestroyed:', error);
         res.status(500).json({ error: 'Failed to fetch events' });
       }
     });
